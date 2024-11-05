@@ -37,7 +37,7 @@ export const CreatePostForm = () => {
       onSubmit={handleSubmit((values) => {
         const imageForm = new FormData()
 
-        if (values.image) {
+        if (values.image && values.image?.length === 1) {
           imageForm.append('image', values.image[0])
         }
 
