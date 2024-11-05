@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { type FieldError, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -12,9 +12,11 @@ import { postSchema } from '@/actions/schemas'
 import { createPost } from '@/actions/create-post'
 import { useMutation } from '@tanstack/react-query'
 
+const isServer = typeof window === 'undefined'
+
 const createPostSchema = postSchema
   .omit({ image: true })
-  .extend({ image: z.instanceof(FileList).optional() })
+  .extend({ image: isServer ? z.any() : z.instanceof(FileList).optional() })
 
 export const CreatePostForm = () => {
   const { mutate, error, isPending } = useMutation({
@@ -57,7 +59,7 @@ export const CreatePostForm = () => {
         type='file'
         {...register('image')}
         label='image'
-        error={errors.image}
+        error={errors.image as FieldError}
       />
       <Button type='submit'>{isPending ? 'uploading post...' : 'post'}</Button>
       {error && <p className='text-primary'>{error.message}</p>}
