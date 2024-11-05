@@ -12,6 +12,10 @@ import { postSchema } from '@/actions/schemas'
 import { createPost } from '@/actions/create-post'
 import { useMutation } from '@tanstack/react-query'
 
+const createPostSchema = postSchema
+  .omit({ image: true })
+  .extend({ image: z.instanceof(FileList).optional() })
+
 export const CreatePostForm = () => {
   const { mutate, error, isPending } = useMutation({
     mutationFn: createPost,
@@ -22,13 +26,25 @@ export const CreatePostForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<z.infer<typeof postSchema>>({
-    resolver: zodResolver(postSchema),
+  } = useForm<z.infer<typeof createPostSchema>>({
+    resolver: zodResolver(createPostSchema),
   })
 
   return (
     <form
-      onSubmit={handleSubmit((values) => mutate(values))}
+      onSubmit={handleSubmit((values) => {
+        const imageForm = new FormData()
+
+        if (values.image) {
+          imageForm.append('image', values.image[0])
+        }
+
+        mutate({
+          title: values.title,
+          content: values.content,
+          image: imageForm,
+        })
+      })}
       className='flex w-full flex-col gap-4'
     >
       <Input {...register('title')} label='title' error={errors.title} />
@@ -36,6 +52,12 @@ export const CreatePostForm = () => {
         {...register('content')}
         label='content'
         error={errors.content}
+      />
+      <Input
+        type='file'
+        {...register('image')}
+        label='image'
+        error={errors.image}
       />
       <Button type='submit'>{isPending ? 'uploading post...' : 'post'}</Button>
       {error && <p className='text-primary'>{error.message}</p>}
